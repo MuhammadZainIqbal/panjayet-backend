@@ -1,0 +1,53 @@
+# render.yaml — Panjayet Backend Blueprint
+# Deploy via: Render Dashboard → New → Blueprint → point to this repo.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: panjayet-backend
+    runtime: python
+    # Pin to Python 3.12. Render supports 3.11, 3.12, 3.13.
+    # Check https://render.com/docs/python-version for the current list.
+    pythonVersion: "3.12"
+
+    # Build: install all dependencies from requirements.txt
+    buildCommand: pip install -r requirements.txt
+
+    # Production start command:
+    #   -w 4          → 4 Uvicorn worker processes (tune to: (2 * CPU cores) + 1)
+    #   -k            → worker class: UvicornWorker handles async / SSE correctly
+    #   --timeout 120 → 120 s before Gunicorn hard-kills a silent worker;
+    #                   SSE streams keep the connection alive so this is a safety net
+    #   --keep-alive 5 → seconds to keep idle HTTP connections open
+    #   --log-level info → structured logs visible in Render's log stream
+    startCommand: >-
+      gunicorn main:app
+      -w 4
+      -k uvicorn.workers.UvicornWorker
+      --timeout 120
+      --keep-alive 5
+      --log-level info
+
+    # Render's free tier is sufficient for staging; upgrade to Starter+ for prod SSE load.
+    plan: free
+
+    # Health-check endpoint — matches the /health route already in session.py
+    healthCheckPath: /health
+
+    envVars:
+      # ── Required in production ──────────────────────────────────────────────
+      # The exact origin of your deployed frontend. No trailing slash.
+      # This value is read by main.py to lock down CORS.
+      - key: FRONTEND_URL
+        value: https://panjayet.zainiqbal.tech   # ← confirm or override in dashboard
+
+      # ── API keys (set as Secret Files or env vars in the Render dashboard) ──
+      # These are placeholders. Never commit real values here.
+      - key: OPENROUTER_API_KEY
+        sync: false   # tells Render this must be set manually in the dashboard
+
+      - key: GROQ_API_KEY
+        sync: false
+
+      - key: GEMINI_API_KEY
+        sync: false

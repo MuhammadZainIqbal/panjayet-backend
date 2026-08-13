@@ -1,0 +1,21 @@
+# Environments
+.env
+.env.local
+.env.*
+
+# Python caches and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+
+# OS generated files
+.DS_Store
