@@ -1,9 +1,7 @@
 """
 Panjayet API — FastAPI app entry point.
 """
-import os
 import logging
-from typing import List
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,32 +58,17 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    root_path="/panjayet",
 )
 
 # ── CORS ────────────────────────────────────────────────────────────────────
-# In production, FRONTEND_URL must be set to the exact deployed frontend origin
-# (e.g. https://panjayet.zainiqbal.tech). If it is absent we assume local dev
-# and open up to localhost on common ports so nothing breaks.
-_frontend_url: str | None = os.getenv("FRONTEND_URL")
-
-if _frontend_url:
-    _allowed_origins: List[str] = [_frontend_url.rstrip("/")]
-    _allow_origin_regex: str | None = None
-else:
-    # Local dev fallback — never reaches production
-    _allowed_origins = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ]
-    _allow_origin_regex = None
-
+# Unified container policy: wildcard origins with credentials=False.
+# This matches the hoptrace and pragma CORS configuration and satisfies
+# the browser spec (allow_credentials cannot be True with allow_origins=["*"]).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
-    allow_origin_regex=_allow_origin_regex,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # Cannot be True when allow_origins=["*"] — browser spec violation
     allow_methods=["*"],
     allow_headers=["*"],
 )
